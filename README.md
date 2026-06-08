@@ -88,3 +88,8 @@ dotnet run --project AspireApp.AppHost
 ```
 
 Once started, the console will output the URL for the **Aspire Dashboard** (e.g., `https://localhost:17229`). Navigate to this page in your browser to view telemetry, logs, and click the link for the `webfrontend` to access the Task Board.
+<img width="1919" height="843" alt="image" src="https://github.com/user-attachments/assets/973702e9-d044-4ffa-a5c5-4f202fe28092" />
+<img width="1181" height="523" alt="image" src="https://github.com/user-attachments/assets/a8402b69-699a-4fd8-90b0-699348aef618" />
+<img width="1919" height="625" alt="image" src="https://github.com/user-attachments/assets/d38dd20d-7f4a-4292-a0ab-3007a19d91e9" />
+
+
