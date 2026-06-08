@@ -1,4 +1,5 @@
 @page "/"
+@rendermode InteractiveServer
 @inject TaskApiClient TaskApi
 
 <PageTitle>Distributed Task Board</PageTitle>
@@ -10,149 +11,209 @@
             <h1 class="text-white mb-1">Project Workspace</h1>
             <p class="text-muted mb-0">Distributed task management powered by .NET Aspire &amp; Blazor</p>
         </div>
-        <button class="btn btn-premium" @onclick="ShowCreateForm">
-            Add New Task
-        </button>
-    </div>
-
-    <!-- Quick Stats -->
-    <div class="stats-row">
-        <div class="stat-card">
-            <div>
-                <div class="stat-val">@tasks.Count(t => t.Status == "Todo")</div>
-                <div class="stat-label">To Do</div>
-            </div>
-            <div class="stat-icon icon-todo">&#9675;</div>
-        </div>
-        <div class="stat-card">
-            <div>
-                <div class="stat-val">@tasks.Count(t => t.Status == "InProgress")</div>
-                <div class="stat-label">In Progress</div>
-            </div>
-            <div class="stat-icon icon-progress">&#9656;</div>
-        </div>
-        <div class="stat-card">
-            <div>
-                <div class="stat-val">@tasks.Count(t => t.Status == "InReview")</div>
-                <div class="stat-label">In Review</div>
-            </div>
-            <div class="stat-icon icon-review">&#9673;</div>
-        </div>
-        <div class="stat-card">
-            <div>
-                <div class="stat-val">@tasks.Count(t => t.Status == "Completed")</div>
-                <div class="stat-label">Completed</div>
-            </div>
-            <div class="stat-icon icon-completed">&#10003;</div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-secondary" @onclick="ToggleChat">
+                @(isChatOpen ? "Hide Copilot" : "✦ AI Copilot")
+            </button>
+            <button class="btn btn-premium" @onclick="ShowCreateForm">
+                Add New Task
+            </button>
         </div>
     </div>
 
-    @if (isCreating)
-    {
-        <!-- Inline Create Task Form -->
-        <div class="glass-panel mb-4">
-            <h3 class="text-white mb-3">Create New Task</h3>
-            <EditForm Model="@newTask" OnValidSubmit="HandleCreateTask">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label text-muted">Title</label>
-                        <InputText @bind-Value="newTask.Title" class="form-control premium-input w-100" placeholder="e.g. Design Dashboard" required />
+    <div class="row">
+        <div class="@(isChatOpen ? "col-lg-9 col-md-8 transition-width" : "col-12 transition-width")">
+            <!-- Quick Stats -->
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div>
+                        <div class="stat-val">@tasks.Count(t => t.Status == "Todo")</div>
+                        <div class="stat-label">To Do</div>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label text-muted">Assignee</label>
-                        <InputText @bind-Value="newTask.Assignee" class="form-control premium-input w-100" placeholder="e.g. Ashwini D." required />
+                    <div class="stat-icon icon-todo">&#9675;</div>
+                </div>
+                <div class="stat-card">
+                    <div>
+                        <div class="stat-val">@tasks.Count(t => t.Status == "InProgress")</div>
+                        <div class="stat-label">In Progress</div>
                     </div>
-                    <div class="col-12">
-                        <label class="form-label text-muted">Description</label>
-                        <InputTextArea @bind-Value="newTask.Description" class="form-control premium-input w-100" rows="3" placeholder="Enter task details..." required />
+                    <div class="stat-icon icon-progress">&#9656;</div>
+                </div>
+                <div class="stat-card">
+                    <div>
+                        <div class="stat-val">@tasks.Count(t => t.Status == "InReview")</div>
+                        <div class="stat-label">In Review</div>
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label text-muted">Priority</label>
-                        <InputSelect @bind-Value="newTask.Priority" class="form-select premium-input w-100">
-                            <option value="Low">Low</option>
-                            <option value="Medium">Medium</option>
-                            <option value="High">High</option>
-                        </InputSelect>
+                    <div class="stat-icon icon-review">&#9673;</div>
+                </div>
+                <div class="stat-card">
+                    <div>
+                        <div class="stat-val">@tasks.Count(t => t.Status == "Completed")</div>
+                        <div class="stat-label">Completed</div>
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label text-muted">Status</label>
-                        <InputSelect @bind-Value="newTask.Status" class="form-select premium-input w-100">
-                            <option value="Todo">To Do</option>
-                            <option value="InProgress">In Progress</option>
-                            <option value="InReview">In Review</option>
-                            <option value="Completed">Completed</option>
-                        </InputSelect>
+                    <div class="stat-icon icon-completed">&#10003;</div>
+                </div>
+            </div>
+
+            @if (isCreating)
+            {
+                <!-- Inline Create Task Form -->
+                <div class="glass-panel mb-4">
+                    <h3 class="text-white mb-3">Create New Task</h3>
+                    <EditForm Model="@newTask" OnValidSubmit="HandleCreateTask">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <div class="glass-panel p-3 border border-secondary-subtle mb-2" style="background: rgba(168, 85, 247, 0.05);">
+                                    <label class="form-label text-white"><span class="badge bg-purple me-2">AI</span> Express Task Idea</label>
+                                    <div class="input-group">
+                                        <input type="text" @bind="aiPrompt" class="form-control premium-input" placeholder="e.g. design dashboard mockups, assign to Sarah with High priority" />
+                                        <button type="button" class="btn btn-premium" @onclick="SuggestTaskDetails" disabled="@isGenerating">
+                                            @if (isGenerating) {
+                                                <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                                <span>Analyzing...</span>
+                                            } else {
+                                                <span>Suggest Details</span>
+                                            }
+                                        </button>
+                                    </div>
+                                    <small class="text-muted mt-1 d-block">AI will automatically suggest a title, description, priority, and assignee based on your description.</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted">Title</label>
+                                <InputText @bind-Value="newTask.Title" class="form-control premium-input w-100" placeholder="e.g. Design Dashboard" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted">Assignee</label>
+                                <InputText @bind-Value="newTask.Assignee" class="form-control premium-input w-100" placeholder="e.g. Ashwini D." required />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label text-muted">Description</label>
+                                <InputTextArea @bind-Value="newTask.Description" class="form-control premium-input w-100" rows="3" placeholder="Enter task details..." required />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label text-muted">Priority</label>
+                                <InputSelect @bind-Value="newTask.Priority" class="form-select premium-input w-100">
+                                    <option value="Low">Low</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="High">High</option>
+                                </InputSelect>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label text-muted">Status</label>
+                                <InputSelect @bind-Value="newTask.Status" class="form-select premium-input w-100">
+                                    <option value="Todo">To Do</option>
+                                    <option value="InProgress">In Progress</option>
+                                    <option value="InReview">In Review</option>
+                                    <option value="Completed">Completed</option>
+                                </InputSelect>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label text-muted">Due Date</label>
+                                <InputDate @bind-Value="newTask.DueDate" class="form-control premium-input w-100" />
+                            </div>
+                            <div class="col-12 d-flex gap-2 justify-content-end mt-4">
+                                <button type="button" class="btn btn-secondary" @onclick="CancelCreate">Cancel</button>
+                                <button type="submit" class="btn btn-premium">Save Task</button>
+                            </div>
+                        </div>
+                    </EditForm>
+                </div>
+            }
+
+            <!-- Kanban Board -->
+            <div class="kanban-board">
+                <!-- TO DO -->
+                <div class="kanban-column">
+                    <div class="kanban-column-header">
+                        <span class="column-title"><span style="color: var(--status-todo); font-size: 14px; margin-right: 6px;">&#9679;</span> To Do</span>
+                        <span class="column-badge">@tasks.Count(t => t.Status == "Todo")</span>
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label text-muted">Due Date</label>
-                        <InputDate @bind-Value="newTask.DueDate" class="form-control premium-input w-100" />
-                    </div>
-                    <div class="col-12 d-flex gap-2 justify-content-end mt-4">
-                        <button type="button" class="btn btn-secondary" @onclick="CancelCreate">Cancel</button>
-                        <button type="submit" class="btn btn-premium">Save Task</button>
+                    <div class="flex-grow-1">
+                        @foreach (var task in tasks.Where(t => t.Status == "Todo"))
+                        {
+                            @renderTaskCard(task)
+                        }
                     </div>
                 </div>
-            </EditForm>
-        </div>
-    }
 
-    <!-- Kanban Board -->
-    <div class="kanban-board">
-        <!-- TO DO -->
-        <div class="kanban-column">
-            <div class="kanban-column-header">
-                <span class="column-title"><span style="color: var(--status-todo); font-size: 14px; margin-right: 6px;">&#9679;</span> To Do</span>
-                <span class="column-badge">@tasks.Count(t => t.Status == "Todo")</span>
-            </div>
-            <div class="flex-grow-1">
-                @foreach (var task in tasks.Where(t => t.Status == "Todo"))
-                {
-                    @renderTaskCard(task)
-                }
-            </div>
-        </div>
+                <!-- IN PROGRESS -->
+                <div class="kanban-column">
+                    <div class="kanban-column-header">
+                        <span class="column-title"><span style="color: var(--status-inprogress); font-size: 14px; margin-right: 6px;">&#9679;</span> In Progress</span>
+                        <span class="column-badge">@tasks.Count(t => t.Status == "InProgress")</span>
+                    </div>
+                    <div class="flex-grow-1">
+                        @foreach (var task in tasks.Where(t => t.Status == "InProgress"))
+                        {
+                            @renderTaskCard(task)
+                        }
+                    </div>
+                </div>
 
-        <!-- IN PROGRESS -->
-        <div class="kanban-column">
-            <div class="kanban-column-header">
-                <span class="column-title"><span style="color: var(--status-inprogress); font-size: 14px; margin-right: 6px;">&#9679;</span> In Progress</span>
-                <span class="column-badge">@tasks.Count(t => t.Status == "InProgress")</span>
-            </div>
-            <div class="flex-grow-1">
-                @foreach (var task in tasks.Where(t => t.Status == "InProgress"))
-                {
-                    @renderTaskCard(task)
-                }
-            </div>
-        </div>
+                <!-- IN REVIEW -->
+                <div class="kanban-column">
+                    <div class="kanban-column-header">
+                        <span class="column-title"><span style="color: var(--status-inreview); font-size: 14px; margin-right: 6px;">&#9679;</span> In Review</span>
+                        <span class="column-badge">@tasks.Count(t => t.Status == "InReview")</span>
+                    </div>
+                    <div class="flex-grow-1">
+                        @foreach (var task in tasks.Where(t => t.Status == "InReview"))
+                        {
+                            @renderTaskCard(task)
+                        }
+                    </div>
+                </div>
 
-        <!-- IN REVIEW -->
-        <div class="kanban-column">
-            <div class="kanban-column-header">
-                <span class="column-title"><span style="color: var(--status-inreview); font-size: 14px; margin-right: 6px;">&#9679;</span> In Review</span>
-                <span class="column-badge">@tasks.Count(t => t.Status == "InReview")</span>
-            </div>
-            <div class="flex-grow-1">
-                @foreach (var task in tasks.Where(t => t.Status == "InReview"))
-                {
-                    @renderTaskCard(task)
-                }
+                <!-- COMPLETED -->
+                <div class="kanban-column">
+                    <div class="kanban-column-header">
+                        <span class="column-title"><span style="color: var(--status-completed); font-size: 14px; margin-right: 6px;">&#9679;</span> Completed</span>
+                        <span class="column-badge">@tasks.Count(t => t.Status == "Completed")</span>
+                    </div>
+                    <div class="flex-grow-1">
+                        @foreach (var task in tasks.Where(t => t.Status == "Completed"))
+                        {
+                            @renderTaskCard(task)
+                        }
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- COMPLETED -->
-        <div class="kanban-column">
-            <div class="kanban-column-header">
-                <span class="column-title"><span style="color: var(--status-completed); font-size: 14px; margin-right: 6px;">&#9679;</span> Completed</span>
-                <span class="column-badge">@tasks.Count(t => t.Status == "Completed")</span>
+        @if (isChatOpen)
+        {
+            <div class="col-lg-3 col-md-4 chat-sidebar-panel">
+                <div class="glass-panel h-100 d-flex flex-column" style="min-height: 550px;">
+                    <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-secondary-subtle">
+                         <h5 class="text-white mb-0"><span style="color: #a855f7;">✦</span> AI Copilot</h5>
+                         <button class="btn-close-chat" @onclick="ToggleChat">✕</button>
+                    </div>
+                    
+                    <div class="chat-history-container flex-grow-1 overflow-auto mb-3" style="max-height: 400px; display: flex; flex-direction: column; gap: 8px;">
+                         @foreach (var msg in chatMessages)
+                         {
+                              <div class="chat-bubble @(msg.Role == "user" ? "user-bubble" : "assistant-bubble")">
+                                  <div class="chat-role">@(msg.Role == "user" ? "You" : "AI Copilot")</div>
+                                  <div class="chat-content">@msg.Content</div>
+                              </div>
+                         }
+                         @if (isSendingChat)
+                         {
+                              <div class="chat-bubble assistant-bubble">
+                                  <div class="chat-role">AI Copilot</div>
+                                  <div class="chat-content"><span class="typing-indicator">Thinking...</span></div>
+                              </div>
+                         }
+                    </div>
+                    
+                    <div class="input-group">
+                         <input type="text" @bind="chatInput" @bind:event="oninput" @onkeyup="HandleChatKeyup" class="form-control premium-input" placeholder="Ask about tasks..." />
+                         <button class="btn btn-premium btn-sm" @onclick="SendChatMessage" disabled="@(isSendingChat || string.IsNullOrWhiteSpace(chatInput))">Send</button>
+                    </div>
+                </div>
             </div>
-            <div class="flex-grow-1">
-                @foreach (var task in tasks.Where(t => t.Status == "Completed"))
-                {
-                    @renderTaskCard(task)
-                }
-            </div>
-        </div>
+        }
     </div>
 </div>
 
@@ -160,6 +221,88 @@
     private List<TaskItem> tasks = new();
     private bool isCreating = false;
     private TaskFormModel newTask = new();
+    private string aiPrompt = "";
+    private bool isGenerating = false;
+    private bool isChatOpen = false;
+    private string chatInput = "";
+    private bool isSendingChat = false;
+    private List<ChatMessageDto> chatMessages = new()
+    {
+        new ChatMessageDto("assistant", "Hello! I am your AI Copilot. Ask me anything about the tasks in this workspace, or ask me to summarize them.")
+    };
+
+    private void ToggleChat()
+    {
+        isChatOpen = !isChatOpen;
+    }
+
+    private async Task SuggestTaskDetails()
+    {
+        if (string.IsNullOrWhiteSpace(aiPrompt)) return;
+        isGenerating = true;
+        try
+        {
+            var result = await TaskApi.SuggestTaskAsync(aiPrompt);
+            if (result != null)
+            {
+                newTask.Title = result.Title;
+                newTask.Description = result.Description;
+                newTask.Priority = result.Priority;
+                if (!string.IsNullOrEmpty(result.Assignee) && result.Assignee != "AI Suggested")
+                {
+                    newTask.Assignee = result.Assignee;
+                }
+                aiPrompt = "";
+            }
+        }
+        catch (Exception)
+        {
+            // Fail gracefully
+        }
+        finally
+        {
+            isGenerating = false;
+        }
+    }
+
+    private async Task SendChatMessage()
+    {
+        if (string.IsNullOrWhiteSpace(chatInput)) return;
+        var userMsg = chatInput;
+        chatInput = "";
+        chatMessages.Add(new ChatMessageDto("user", userMsg));
+        isSendingChat = true;
+        
+        try
+        {
+            var history = chatMessages.Skip(1).Take(chatMessages.Count - 2).ToList();
+            var response = await TaskApi.ChatAsync(userMsg, history);
+            if (response != null)
+            {
+                chatMessages.Add(new ChatMessageDto("assistant", response.Response));
+            }
+            else
+            {
+                chatMessages.Add(new ChatMessageDto("assistant", "Sorry, I couldn't get a response."));
+            }
+        }
+        catch (Exception ex)
+        {
+            chatMessages.Add(new ChatMessageDto("assistant", $"Error: {ex.Message}"));
+        }
+        finally
+        {
+            isSendingChat = false;
+        }
+    }
+
+    private async Task HandleChatKeyup(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SendChatMessage();
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {

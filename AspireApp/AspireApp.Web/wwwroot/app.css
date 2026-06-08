@@ -375,3 +375,92 @@ h1, h2, h3, h4 {
     background: var(--priority-high);
     color: white;
 }
+
+/* AI Copilot Styles */
+.transition-width {
+    transition: width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.chat-sidebar-panel {
+    animation: slideIn 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.bg-purple {
+    background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
+    color: white;
+}
+
+.chat-history-container {
+    padding-right: 4px;
+}
+
+.chat-bubble {
+    padding: 10px 12px;
+    border-radius: 12px;
+    max-width: 85%;
+    font-size: 0.88rem;
+    line-height: 1.45;
+}
+
+.user-bubble {
+    background: rgba(99, 102, 241, 0.25);
+    border: 1px solid rgba(99, 102, 241, 0.4);
+    align-self: flex-end;
+    margin-left: auto;
+}
+
+.assistant-bubble {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    align-self: flex-start;
+}
+
+.chat-role {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 3px;
+    letter-spacing: 0.5px;
+}
+
+.chat-content {
+    color: var(--text-primary);
+    white-space: pre-wrap;
+}
+
+.btn-close-chat {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.btn-close-chat:hover {
+    color: white;
+}
+
+.typing-indicator {
+    font-style: italic;
+    color: #a855f7;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { opacity: 0.5; }
+}

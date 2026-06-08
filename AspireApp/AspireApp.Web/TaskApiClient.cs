@@ -39,7 +39,33 @@ public class TaskApiClient(HttpClient httpClient)
         var response = await httpClient.DeleteAsync($"/api/tasks/{id}", cancellationToken);
         return response.IsSuccessStatusCode;
     }
+
+    public async Task<AiSuggestResponse?> SuggestTaskAsync(string prompt, CancellationToken cancellationToken = default)
+    {
+        var response = await httpClient.PostAsJsonAsync("/api/ai/suggest-task", new AiSuggestRequest(prompt), cancellationToken);
+        if (response.IsSuccessStatusCode)
+        {
+            return await response.Content.ReadFromJsonAsync<AiSuggestResponse>(cancellationToken: cancellationToken);
+        }
+        return null;
+    }
+
+    public async Task<AiChatResponse?> ChatAsync(string message, List<ChatMessageDto> history, CancellationToken cancellationToken = default)
+    {
+        var response = await httpClient.PostAsJsonAsync("/api/ai/chat", new AiChatRequest(message, history), cancellationToken);
+        if (response.IsSuccessStatusCode)
+        {
+            return await response.Content.ReadFromJsonAsync<AiChatResponse>(cancellationToken: cancellationToken);
+        }
+        return null;
+    }
 }
+
+public record AiSuggestRequest(string Prompt);
+public record AiSuggestResponse(string Title, string Description, string Priority, string Assignee);
+public record AiChatRequest(string Message, List<ChatMessageDto> History);
+public record ChatMessageDto(string Role, string Content);
+public record AiChatResponse(string Response);
 
 public record TaskItem(
     Guid Id,

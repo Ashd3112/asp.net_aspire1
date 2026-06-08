@@ -27,6 +27,8 @@ graph TD
 ## Technology Stack
 
 * **Orchestration**: .NET Aspire 9.0+
+* **AI Engine**: Microsoft Semantic Kernel (v1.77.0)
+* **LLM Integrations**: Ollama (local offline models like `llama3.2`) and OpenAI (cloud model connection via API key)
 * **Backend**: ASP.NET Core Web APIs (Minimal API)
 * **Frontend**: Blazor Web App (Interactive Server render mode)
 * **Styling**: Vanilla CSS with glassmorphic styling, glowing borders, custom typography (Outfit and Inter Google Fonts), and responsive flex layouts.
@@ -35,10 +37,30 @@ graph TD
 
 ## Features
 
+* **AI Copilot Sidebar**: Interactive, glassmorphic chat assistant integrated into the dashboard. It uses Semantic Kernel to read real-time task board content and answer queries or summarize work.
+* **Express Task Idea (AI Auto-Fill)**: Allows you to type an informal task idea (e.g. *"fix memory leak and assign to Sarah with high priority"*), and the AI automatically extracts and suggests structured Title, Description, Priority, and Assignee details.
 * **Distributed Orchestration**: Auto-configured service connection strings and base URLs using Aspire Service Discovery (`https+http://apiservice`).
 * **Visual Kanban Board**: Filterable columns representing states: *To Do*, *In Progress*, *In Review*, and *Completed*.
 * **Dynamic Analytics**: Live task status counters at the top of the interface.
 * **Task CRUD Operations**: Inline form for task creation (Title, Assignee, Description, Priority, Due Date), status transition buttons, and delete actions.
+
+---
+
+## AI Configuration
+
+The application is configured to run in **Mock Mode** by default. To connect a live LLM, configure the `AISettings` section in `AspireApp.ApiService/appsettings.json`:
+
+```json
+  "AISettings": {
+    "Provider": "Ollama", // Choose: "Ollama", "OpenAI", or "None" (Mock Fallback)
+    "ApiKey": "", // Put your OpenAI ApiKey here if using OpenAI provider
+    "ModelId": "gpt-4o-mini", // OpenAI model ID
+    "Endpoint": "http://localhost:11434", // Local Ollama endpoint
+    "OllamaModelId": "llama3.2" // Local Ollama model to pull/use
+  }
+```
+
+*Note: If using Ollama, ensure the Ollama app is running locally and you've pulled the model via `ollama pull llama3.2`.*
 
 ---
 

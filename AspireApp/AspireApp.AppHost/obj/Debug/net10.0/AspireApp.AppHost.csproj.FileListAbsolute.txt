@@ -105,3 +105,4 @@ C:\Backup from Previous\DotNetPractice\asp.net_aspire\AspireApp\AspireApp.AppHos
 C:\Backup from Previous\DotNetPractice\asp.net_aspire\AspireApp\AspireApp.AppHost\obj\Debug\net10.0\AspireApp.AppHost.pdb
 C:\Backup from Previous\DotNetPractice\asp.net_aspire\AspireApp\AspireApp.AppHost\obj\Debug\net10.0\AspireApp.AppHost.genruntimeconfig.cache
 C:\Backup from Previous\DotNetPractice\asp.net_aspire\AspireApp\AspireApp.AppHost\obj\Debug\net10.0\ref\AspireApp.AppHost.dll
+C:\Backup from Previous\DotNetPractice\asp.net_aspire\AspireApp\AspireApp.AppHost\obj\Debug\net10.0\AspireApp.AppHost.sourcelink.json
