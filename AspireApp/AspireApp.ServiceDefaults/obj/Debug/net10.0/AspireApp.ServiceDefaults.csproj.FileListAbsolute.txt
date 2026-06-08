@@ -1,0 +1,12 @@
+C:\Backup from Previous\DotNetPractice\asp.net_aspire\AspireApp\AspireApp.ServiceDefaults\bin\Debug\net10.0\AspireApp.ServiceDefaults.deps.json
+C:\Backup from Previous\DotNetPractice\asp.net_aspire\AspireApp\AspireApp.ServiceDefaults\bin\Debug\net10.0\AspireApp.ServiceDefaults.dll
+C:\Backup from Previous\DotNetPractice\asp.net_aspire\AspireApp\AspireApp.ServiceDefaults\bin\Debug\net10.0\AspireApp.ServiceDefaults.pdb
+C:\Backup from Previous\DotNetPractice\asp.net_aspire\AspireApp\AspireApp.ServiceDefaults\obj\Debug\net10.0\AspireApp.ServiceDefaults.csproj.AssemblyReference.cache
+C:\Backup from Previous\DotNetPractice\asp.net_aspire\AspireApp\AspireApp.ServiceDefaults\obj\Debug\net10.0\AspireApp.ServiceDefaults.GeneratedMSBuildEditorConfig.editorconfig
+C:\Backup from Previous\DotNetPractice\asp.net_aspire\AspireApp\AspireApp.ServiceDefaults\obj\Debug\net10.0\AspireApp.ServiceDefaults.AssemblyInfoInputs.cache
+C:\Backup from Previous\DotNetPractice\asp.net_aspire\AspireApp\AspireApp.ServiceDefaults\obj\Debug\net10.0\AspireApp.ServiceDefaults.AssemblyInfo.cs
+C:\Backup from Previous\DotNetPractice\asp.net_aspire\AspireApp\AspireApp.ServiceDefaults\obj\Debug\net10.0\AspireApp.ServiceDefaults.csproj.CoreCompileInputs.cache
+C:\Backup from Previous\DotNetPractice\asp.net_aspire\AspireApp\AspireApp.ServiceDefaults\obj\Debug\net10.0\AspireApp.ServiceDefaults.dll
+C:\Backup from Previous\DotNetPractice\asp.net_aspire\AspireApp\AspireApp.ServiceDefaults\obj\Debug\net10.0\refint\AspireApp.ServiceDefaults.dll
+C:\Backup from Previous\DotNetPractice\asp.net_aspire\AspireApp\AspireApp.ServiceDefaults\obj\Debug\net10.0\AspireApp.ServiceDefaults.pdb
+C:\Backup from Previous\DotNetPractice\asp.net_aspire\AspireApp\AspireApp.ServiceDefaults\obj\Debug\net10.0\ref\AspireApp.ServiceDefaults.dll

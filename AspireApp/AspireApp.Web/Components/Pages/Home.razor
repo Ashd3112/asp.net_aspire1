@@ -1,0 +1,265 @@
+@page "/"
+@inject TaskApiClient TaskApi
+
+<PageTitle>Distributed Task Board</PageTitle>
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="text-white mb-1">Project Workspace</h1>
+            <p class="text-muted mb-0">Distributed task management powered by .NET Aspire &amp; Blazor</p>
+        </div>
+        <button class="btn btn-premium" @onclick="ShowCreateForm">
+            Add New Task
+        </button>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div>
+                <div class="stat-val">@tasks.Count(t => t.Status == "Todo")</div>
+                <div class="stat-label">To Do</div>
+            </div>
+            <div class="stat-icon icon-todo">&#9675;</div>
+        </div>
+        <div class="stat-card">
+            <div>
+                <div class="stat-val">@tasks.Count(t => t.Status == "InProgress")</div>
+                <div class="stat-label">In Progress</div>
+            </div>
+            <div class="stat-icon icon-progress">&#9656;</div>
+        </div>
+        <div class="stat-card">
+            <div>
+                <div class="stat-val">@tasks.Count(t => t.Status == "InReview")</div>
+                <div class="stat-label">In Review</div>
+            </div>
+            <div class="stat-icon icon-review">&#9673;</div>
+        </div>
+        <div class="stat-card">
+            <div>
+                <div class="stat-val">@tasks.Count(t => t.Status == "Completed")</div>
+                <div class="stat-label">Completed</div>
+            </div>
+            <div class="stat-icon icon-completed">&#10003;</div>
+        </div>
+    </div>
+
+    @if (isCreating)
+    {
+        <!-- Inline Create Task Form -->
+        <div class="glass-panel mb-4">
+            <h3 class="text-white mb-3">Create New Task</h3>
+            <EditForm Model="@newTask" OnValidSubmit="HandleCreateTask">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label text-muted">Title</label>
+                        <InputText @bind-Value="newTask.Title" class="form-control premium-input w-100" placeholder="e.g. Design Dashboard" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted">Assignee</label>
+                        <InputText @bind-Value="newTask.Assignee" class="form-control premium-input w-100" placeholder="e.g. Ashwini D." required />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label text-muted">Description</label>
+                        <InputTextArea @bind-Value="newTask.Description" class="form-control premium-input w-100" rows="3" placeholder="Enter task details..." required />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label text-muted">Priority</label>
+                        <InputSelect @bind-Value="newTask.Priority" class="form-select premium-input w-100">
+                            <option value="Low">Low</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                        </InputSelect>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label text-muted">Status</label>
+                        <InputSelect @bind-Value="newTask.Status" class="form-select premium-input w-100">
+                            <option value="Todo">To Do</option>
+                            <option value="InProgress">In Progress</option>
+                            <option value="InReview">In Review</option>
+                            <option value="Completed">Completed</option>
+                        </InputSelect>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label text-muted">Due Date</label>
+                        <InputDate @bind-Value="newTask.DueDate" class="form-control premium-input w-100" />
+                    </div>
+                    <div class="col-12 d-flex gap-2 justify-content-end mt-4">
+                        <button type="button" class="btn btn-secondary" @onclick="CancelCreate">Cancel</button>
+                        <button type="submit" class="btn btn-premium">Save Task</button>
+                    </div>
+                </div>
+            </EditForm>
+        </div>
+    }
+
+    <!-- Kanban Board -->
+    <div class="kanban-board">
+        <!-- TO DO -->
+        <div class="kanban-column">
+            <div class="kanban-column-header">
+                <span class="column-title"><span style="color: var(--status-todo); font-size: 14px; margin-right: 6px;">&#9679;</span> To Do</span>
+                <span class="column-badge">@tasks.Count(t => t.Status == "Todo")</span>
+            </div>
+            <div class="flex-grow-1">
+                @foreach (var task in tasks.Where(t => t.Status == "Todo"))
+                {
+                    @renderTaskCard(task)
+                }
+            </div>
+        </div>
+
+        <!-- IN PROGRESS -->
+        <div class="kanban-column">
+            <div class="kanban-column-header">
+                <span class="column-title"><span style="color: var(--status-inprogress); font-size: 14px; margin-right: 6px;">&#9679;</span> In Progress</span>
+                <span class="column-badge">@tasks.Count(t => t.Status == "InProgress")</span>
+            </div>
+            <div class="flex-grow-1">
+                @foreach (var task in tasks.Where(t => t.Status == "InProgress"))
+                {
+                    @renderTaskCard(task)
+                }
+            </div>
+        </div>
+
+        <!-- IN REVIEW -->
+        <div class="kanban-column">
+            <div class="kanban-column-header">
+                <span class="column-title"><span style="color: var(--status-inreview); font-size: 14px; margin-right: 6px;">&#9679;</span> In Review</span>
+                <span class="column-badge">@tasks.Count(t => t.Status == "InReview")</span>
+            </div>
+            <div class="flex-grow-1">
+                @foreach (var task in tasks.Where(t => t.Status == "InReview"))
+                {
+                    @renderTaskCard(task)
+                }
+            </div>
+        </div>
+
+        <!-- COMPLETED -->
+        <div class="kanban-column">
+            <div class="kanban-column-header">
+                <span class="column-title"><span style="color: var(--status-completed); font-size: 14px; margin-right: 6px;">&#9679;</span> Completed</span>
+                <span class="column-badge">@tasks.Count(t => t.Status == "Completed")</span>
+            </div>
+            <div class="flex-grow-1">
+                @foreach (var task in tasks.Where(t => t.Status == "Completed"))
+                {
+                    @renderTaskCard(task)
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<TaskItem> tasks = new();
+    private bool isCreating = false;
+    private TaskFormModel newTask = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTasks();
+    }
+
+    private async Task LoadTasks()
+    {
+        var result = await TaskApi.GetTasksAsync();
+        tasks = result.ToList();
+    }
+
+    private void ShowCreateForm()
+    {
+        newTask = new TaskFormModel();
+        isCreating = true;
+    }
+
+    private void CancelCreate()
+    {
+        isCreating = false;
+    }
+
+    private async Task HandleCreateTask()
+    {
+        var item = new TaskItem(
+            Guid.Empty,
+            newTask.Title,
+            newTask.Description,
+            newTask.Status,
+            newTask.Priority,
+            newTask.Assignee,
+            DateTime.UtcNow,
+            newTask.DueDate
+        );
+
+        await TaskApi.CreateTaskAsync(item);
+        isCreating = false;
+        await LoadTasks();
+    }
+
+    private async Task MoveTask(TaskItem task, string newStatus)
+    {
+        var updated = task with { Status = newStatus };
+        await TaskApi.UpdateTaskAsync(task.Id, updated);
+        await LoadTasks();
+    }
+
+    private async Task DeleteTask(Guid id)
+    {
+        await TaskApi.DeleteTaskAsync(id);
+        await LoadTasks();
+    }
+
+    private RenderFragment renderTaskCard(TaskItem task) => __builder => {
+        <div class="task-card">
+            <span class="priority-badge priority-@task.Priority.ToLower()">@task.Priority</span>
+            <div class="task-title">@task.Title</div>
+            <p class="task-desc">@task.Description</p>
+            
+            <div class="task-footer">
+                <div class="task-assignee">
+                    <div class="assignee-avatar">@task.Assignee.Substring(0, Math.Min(2, task.Assignee.Length)).ToUpper()</div>
+                    <span>@task.Assignee</span>
+                </div>
+                @if (task.DueDate.HasValue)
+                {
+                    <span class="task-date">Due @task.DueDate.Value.ToString("MMM dd")</span>
+                }
+            </div>
+
+            <div class="card-actions">
+                @if (task.Status != "Todo")
+                {
+                    <button class="btn-card-action" title="Move to Todo" @onclick='() => MoveTask(task, "Todo")'>&lt; Todo</button>
+                }
+                @if (task.Status == "Todo")
+                {
+                    <button class="btn-card-action" title="Start Progress" @onclick='() => MoveTask(task, "InProgress")'>Start &gt;</button>
+                }
+                @if (task.Status == "InProgress")
+                {
+                    <button class="btn-card-action" title="Review" @onclick='() => MoveTask(task, "InReview")'>Review &gt;</button>
+                }
+                @if (task.Status == "InReview")
+                {
+                    <button class="btn-card-action" title="Complete" @onclick='() => MoveTask(task, "Completed")'>Done &gt;</button>
+                }
+                <button class="btn-card-action btn-card-delete" title="Delete Task" @onclick="() => DeleteTask(task.Id)">Delete</button>
+            </div>
+        </div>
+    };
+
+    public class TaskFormModel
+    {
+        public string Title { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string Status { get; set; } = "Todo";
+        public string Priority { get; set; } = "Medium";
+        public string Assignee { get; set; } = "";
+        public DateTime? DueDate { get; set; } = DateTime.Today.AddDays(3);
+    }
+}
