@@ -64,6 +64,17 @@ The application is configured to run in **Mock Mode** by default. To connect a l
 
 ---
 
+## Observability & Monitoring
+
+The application includes built-in telemetry powered by **OpenTelemetry** and **.NET Aspire Service Defaults**. This enables deep observability for the AI features:
+
+* **Distributed Tracing**: A custom `ActivitySource` traces the latency and execution flow of AI operations (`AiSuggestTask` and `AiChatMessage`) and links them from Blazor (`webfrontend`) down through the API endpoints.
+* **Trace Tags**: Telemetry spans are automatically tagged with metadata (`ai.provider`, `ai.prompt.length`, `ai.mock_fallback`) for precise analysis.
+* **Structured Logs**: Critical AI lifecycle events are logged using structured `ILogger` logs, inheriting active `TraceId` and `SpanId` contexts.
+* **Performance Metrics**: Real-time request latency histograms and HttpClient metrics are exported directly to the dashboard to monitor system performance.
+
+---
+
 ## Getting Started
 
 ### Prerequisites

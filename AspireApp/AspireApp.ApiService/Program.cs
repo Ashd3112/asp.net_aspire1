@@ -1,7 +1,11 @@
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
+using System.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Define ActivitySource for distributed tracing
+var apiServiceActivitySource = new ActivitySource(builder.Environment.ApplicationName);
 
 // Add service defaults & Aspire client integrations.
 builder.AddServiceDefaults();
@@ -102,15 +106,25 @@ app.MapDelete("/api/tasks/{id}", (Guid id) =>
     tasksStore.TryRemove(id, out _) ? Results.NoContent() : Results.NotFound());
 
 // --- AI Assistant Endpoints ---
-app.MapPost("/api/ai/suggest-task", async (AiSuggestRequest request, Kernel skKernel, AiProviderConfig config) =>
+app.MapPost("/api/ai/suggest-task", async (AiSuggestRequest request, Kernel skKernel, AiProviderConfig config, ILogger<Program> logger) =>
 {
+    using var activity = apiServiceActivitySource.StartActivity("AiSuggestTask");
+    activity?.SetTag("ai.provider", config.Provider);
+    activity?.SetTag("ai.prompt.length", request.Prompt.Length);
+
+    logger.LogInformation("Suggesting task details using provider: {Provider} for prompt: {Prompt}", config.Provider, request.Prompt);
+
     if (string.IsNullOrWhiteSpace(request.Prompt))
     {
+        activity?.SetStatus(ActivityStatusCode.Error, "Prompt cannot be empty");
         return Results.BadRequest("Prompt cannot be empty");
     }
 
     if (!config.HasAiService)
     {
+        activity?.SetTag("ai.mock_fallback", true);
+        logger.LogWarning("AI Service not configured; returning fallback mock response.");
+
         // Fallback Mock response
         var lowerPrompt = request.Prompt.ToLower();
         var title = "New Task";
@@ -184,23 +198,36 @@ User request: ""{request.Prompt}""";
 
         if (result != null)
         {
+            activity?.SetStatus(ActivityStatusCode.Ok);
+            logger.LogInformation("Successfully suggested task details: {Title} for {Assignee}", result.Title, result.Assignee);
             return Results.Ok(result);
         }
     }
-    catch (Exception)
+    catch (Exception ex)
     {
-        // Fallback
+        activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+        logger.LogError(ex, "Failed to suggest task details using LLM. Fallback response generated.");
     }
 
     return Results.Ok(new AiSuggestResponse("New Task from AI", request.Prompt, "Medium", "AI Suggested"));
 });
 
-app.MapPost("/api/ai/chat", async (AiChatRequest request, Kernel skKernel, AiProviderConfig config) =>
+app.MapPost("/api/ai/chat", async (AiChatRequest request, Kernel skKernel, AiProviderConfig config, ILogger<Program> logger) =>
 {
+    using var activity = apiServiceActivitySource.StartActivity("AiChatMessage");
+    activity?.SetTag("ai.provider", config.Provider);
+    activity?.SetTag("ai.message.length", request.Message.Length);
+    activity?.SetTag("ai.history.count", request.History.Count);
+
+    logger.LogInformation("Processing AI chat message using provider: {Provider}. Message: '{Message}'", config.Provider, request.Message);
+
     var taskListString = string.Join("\n", tasksStore.Values.Select(t => $"- [{t.Status}] {t.Title} (Priority: {t.Priority}, Assigned: {t.Assignee})"));
 
     if (!config.HasAiService)
     {
+        activity?.SetTag("ai.mock_fallback", true);
+        logger.LogWarning("AI Service not configured; returning fallback mock response.");
+
         var msg = request.Message.ToLower();
         var reply = "This is a mock AI assistant response (No LLM provider configured). I can see you currently have " + tasksStore.Count + " tasks in this workspace.\n\n";
 
@@ -243,10 +270,17 @@ Be concise, helpful, and professional. You have access to the above task context
         chatHistory.AddUserMessage(request.Message);
 
         var reply = await chatService.GetChatMessageContentAsync(chatHistory);
+        
+        activity?.SetStatus(ActivityStatusCode.Ok);
+        logger.LogInformation("Successfully received AI chat response. Length: {Length}", reply.Content?.Length ?? 0);
+
         return Results.Ok(new AiChatResponse(reply.Content ?? "No response generated."));
     }
     catch (Exception ex)
     {
+        activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+        logger.LogError(ex, "Error occurred during LLM chat completion.");
+
         return Results.Ok(new AiChatResponse($"Error calling LLM: {ex.Message}. Make sure your API key or Ollama connection is correct."));
     }
 });
